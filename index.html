@@ -48,14 +48,14 @@
         var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
         var createScene = async function () {
 
-    var scene = new BABYLON.Scene(engine);
+        var scene = new BABYLON.Scene(engine);
 
   
-            // Scene and Camera
         
-            scene.debugLayer.show();
+        // Show the Debugger
+        scene.debugLayer.show();
 
-           let cameraSetup=(cameraValue)=>{
+        let cameraSetup=()=>{
             let camera1;
             camera1=new BABYLON.ArcRotateCamera("camera",-1.57,1.2,6,BABYLON.Vector3.Zero(),scene);
             camera1.setTarget(new BABYLON.Vector3(0,2,0));
@@ -115,8 +115,7 @@
             env.skybox.material = env.skyboxMaterial;
         };
         
-
-             environmentSetup()
+           
         
 
 
@@ -142,7 +141,9 @@
             }));
 
 
-
+           // Adding Setups to scene
+             cameraSetup()
+             environmentSetup()
 
 
 
@@ -151,14 +152,22 @@
     const hairStyle2 = await BABYLON.SceneLoader.ImportMeshAsync("", "AssetStore/", "hairStyle3.glb", scene);
     const mustacheStyle1 = await BABYLON.SceneLoader.ImportMeshAsync("", "AssetStore/", "mustacheStyle1.glb", scene);
     const mustacheStyle2 = await BABYLON.SceneLoader.ImportMeshAsync("", "AssetStore/", "mustacheStyle2.glb", scene);
+
+
+    // Disable the Meshes
+    hairStyle1.meshes[0].setEnabled(false)
+    hairStyle2.meshes[0].setEnabled(false)
+    mustacheStyle1.meshes[0].setEnabled(false)
+    mustacheStyle2.meshes[0].setEnabled(false)
+
     
    
-    var mesh
+    var mesh;
    
     BABYLON.SceneLoader.ImportMesh("", "scenes/", "man.glb", scene, function (newMeshes, particleSystems, skeletons) {
-        	    // let material =materials
+        
           
-               mesh = newMeshes[0];
+                mesh = newMeshes[0];
                 var skeleton = skeletons[0];
 		        mesh.scaling = new BABYLON.Vector3(1,1,1);
 	            mesh.position = new BABYLON.Vector3(0, 0, 0);
@@ -174,7 +183,7 @@
                 hairStyle1.meshes[0].position.z=-0.04;
                 hairStyle1.meshes[0].rotation.x=Math.PI;
 		        hairStyle1.meshes[0].scaling = new BABYLON.Vector3(1, 1, 1);
-		        hairStyle1.meshes[0].setEnabled(false)
+		        // hairStyle1.meshes[0].setEnabled(false)
                 
                 // Adding hairStyle1 1
                 hairStyle2.meshes[0].attachToBone(skeleton.bones[6], mesh);
@@ -182,7 +191,7 @@
                 hairStyle2.meshes[0].position.z=0;
                 hairStyle2.meshes[0].rotation.x=Math.PI;
 		        hairStyle2.meshes[0].scaling = new BABYLON.Vector3(1, 1, 1);
-		        hairStyle2.meshes[0].setEnabled(false)
+		        // hairStyle2.meshes[0].setEnabled(false)
 		        
                 
 
@@ -192,7 +201,7 @@
                 mustacheStyle1.meshes[0].position.z=0.11;
                 mustacheStyle1.meshes[0].rotation.x=Math.PI;
 		        mustacheStyle1.meshes[0].scaling = new BABYLON.Vector3(1, 1, 1);
-		        mustacheStyle1.meshes[0].setEnabled(false)
+		        // mustacheStyle1.meshes[0].setEnabled(false)
 
                 //Adding Mustache Style2 
                 mustacheStyle2.meshes[0].attachToBone(skeleton.bones[6], mesh);
@@ -200,7 +209,7 @@
                 mustacheStyle2.meshes[0].position.z=0.11;
                 mustacheStyle2.meshes[0].rotation.x=Math.PI;
 		        mustacheStyle2.meshes[0].scaling = new BABYLON.Vector3(1, 1, 1);
-		        mustacheStyle2.meshes[0].setEnabled(false)
+		        // mustacheStyle2.meshes[0].setEnabled(false)
 
 
                 cameraSetup().target=mesh
@@ -290,13 +299,13 @@
     
     // Customize Asset Container
     var rect1 = new BABYLON.GUI.Rectangle();
-    rect1.width = "250px";
-    rect1.height = "600px";
+    rect1.width = "22%";
+    rect1.height = "65%";
     rect1.cornerRadius = 20;
     rect1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     rect1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    rect1.top="80px"
-    rect1.left="200px"
+    rect1.top="10%"
+    rect1.left="10%"
     rect1.thickness = 1;
     rect1.background = "#525252";
     advancedTexture.addControl(rect1);   
@@ -308,8 +317,8 @@
     text1.text = "Customize Avatar";
     text1.color = "white";
     text1.fontSize = 24;
-    text1.top="100px"
-    text1.left="220px"
+    text1.top="12%"
+    text1.left="12%"
     advancedTexture.addControl(text1);   
 
     // Choose Hair Style
@@ -319,8 +328,8 @@
     text1.text = "Choose Hair Style";
     text1.color = "white";
     text1.fontSize = 18;
-    text1.top="200px"
-    text1.left="245px"
+    text1.top="20%"
+    text1.left="12%"
     advancedTexture.addControl(text1);  
     
 
@@ -328,8 +337,8 @@
     var button3 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Hair Style 1");
     button3.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     button3.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    button3.top="250px"
-    button3.left="240px"
+    button3.top="25%"
+    button3.left="12%"
     button3.width = "180px"
     button3.height = "30px";
     button3.color = "white";
@@ -350,8 +359,8 @@
     var button4 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Hair Style 2");
     button4.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     button4.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    button4.top="300px"
-    button4.left="240px"
+    button4.top="30%"
+    button4.left="12%"
     button4.width = "180px"
     button4.height = "30px";
     button4.color = "white";
@@ -371,8 +380,8 @@
     var button5 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Restore Default");
     button5.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     button5.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    button5.top="350px"
-    button5.left="240px"
+    button5.top="35%"
+    button5.left="12%"
     button5.width = "180px"
     button5.height = "30px";
     button5.color = "white";
@@ -396,16 +405,16 @@
     text1.text = "Choose Mushtache Style";
     text1.color = "white";
     text1.fontSize = 18;
-    text1.top="400px"
-    text1.left="225px"
+    text1.top="40%"
+    text1.left="12%"
     advancedTexture.addControl(text1);    
 
     // Button Mustaches 1
     var button3 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Mustaches Style 1");
     button3.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     button3.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    button3.top="450px"
-    button3.left="240px"
+    button3.top="45%"
+    button3.left="12%"
     button3.width = "180px"
     button3.height = "30px";
     button3.color = "white";
@@ -424,8 +433,8 @@
     var button4 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Mustaches Style 2");
     button4.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     button4.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    button4.top="500px"
-    button4.left="240px"
+    button4.top="50%"
+    button4.left="12%"
     button4.width = "180px"
     button4.height = "30px";
     button4.color = "white";
@@ -442,8 +451,8 @@
     var button5 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Restore Default");
     button5.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     button5.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    button5.top="550px"
-    button5.left="240px"
+    button5.top="55%"
+    button5.left="12%"
     button5.width = "180px"
     button5.height = "30px";
     button5.color = "white";
@@ -461,13 +470,13 @@
 
 
    var rect2 = new BABYLON.GUI.Rectangle();
-    rect2.width = "250px";
-    rect2.height = "600px";
+    rect2.width = "22%";
+    rect2.height = "65%";
     rect2.cornerRadius = 20;
     rect2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     rect2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    rect2.top="80px"
-    rect2.left="880px"
+    rect2.top="10%"
+    rect2.left="65%"
     rect2.thickness = 1;
     rect2.background = "#525252";
     advancedTexture.addControl(rect2);   
@@ -479,8 +488,8 @@
     text3.text = "Customize Outfit";
     text3.color = "white";
     text3.fontSize = 24;
-    text3.top="100px"
-    text3.left="910px"
+    text3.top="12%"
+    text3.left="67%"
     advancedTexture.addControl(text3);   
 
     
@@ -492,8 +501,8 @@
     text1.text = "Choose Outfit Color";
     text1.color = "white";
     text1.fontSize = 18;
-    text1.top="200px"
-    text1.left="920px"
+    text1.top="20%"
+    text1.left="67%"
     advancedTexture.addControl(text1);  
     
 
@@ -501,8 +510,8 @@
     var button6 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Red Outfit");
     button6.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     button6.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    button6.top="250px"
-    button6.left="920px"
+    button6.top="25%"
+    button6.left="67%"
     button6.width = "180px"
     button6.height = "30px";
     button6.color = "white";
@@ -520,8 +529,8 @@
     var button8 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Green Outfit");
     button8.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     button8.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    button8.top="300px"
-    button8.left="920px"
+    button8.top="30%"
+    button8.left="67%"
     button8.width = "180px"
     button8.height = "30px";
     button8.color = "white";
@@ -536,8 +545,8 @@
     var button9 = BABYLON.GUI.Button.CreateSimpleButton("but1", "blue Outfit");
     button9.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
     button9.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-    button9.top="350px"
-    button9.left="920px"
+    button9.top="35%"
+    button9.left="67%"
     button9.width = "180px"
     button9.height = "30px";
     button9.color = "white";
@@ -559,23 +568,25 @@
     let switchButton=()=>{
 
     var instructions = new BABYLON.GUI.TextBlock();
+    
     instructions.text = "Move with WASD keys";
     instructions.color = "black";
     instructions.fontSize = 25;
 
     instructions.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP
     instructions.left = "0px";
-    instructions.top = "850px";
+    instructions.top = "87%";
 
     advancedTexture1.addControl(instructions);
 
  
     var button = BABYLON.GUI.Button.CreateSimpleButton("but1", "Customize");
     button.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
     button.width = "150px"
     button.height = "40px";
-    button.left = "500px";
-    button.top = "300px";
+    button.left = "30%";
+    button.top = "80%";
     button.color = "white";
     button.cornerRadius = 20;
     button.background = "Black";
@@ -595,10 +606,12 @@
     //Chnage outfit into green
  
     var button = BABYLON.GUI.Button.CreateSimpleButton("but1", "Done");
+    button.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
     button.width = "150px"
     button.height = "40px";
-    button.left = "100px";
-    button.top = "300px";
+    button.left = "60%";
+    button.top = "80%";
     button.color = "white";
     button.cornerRadius = 20;
     button.background = "Black";
