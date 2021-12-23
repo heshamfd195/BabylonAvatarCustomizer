@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>AssetSwtich</title>
+
+        <!-- Babylon.js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+      
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        var createScene = async function () {
+
+    var scene = new BABYLON.Scene(engine);
+
+  
+            // Scene and Camera
+        
+            scene.debugLayer.show();
+
+           let cameraSetup=(cameraValue)=>{
+            let camera1;
+            camera1=new BABYLON.ArcRotateCamera("camera",-1.57,1.2,6,BABYLON.Vector3.Zero(),scene);
+            camera1.setTarget(new BABYLON.Vector3(0,2,0));
+            scene.activeCamera = camera1;
+            scene.activeCamera.attachControl(canvas, true);
+            camera1.lowerRadiusLimit = 2;
+            camera1.upperRadiusLimit = 10;
+            camera1.wheelDeltaPercentage = 0.01;  
+            return camera1
+           }
+           
+           let cameraConfig=()=>{
+            let camera2=new BABYLON.ArcRotateCamera("camera",-1.57,1,3,BABYLON.Vector3.Zero(),scene);
+            camera2.setTarget(new BABYLON.Vector3(0,1,0));
+            // camera2.position(new BABYLON.Vector3(0,0,0))
+            scene.activeCamera = camera2;
+            scene.activeCamera.attachControl(canvas, false);
+            camera2.lowerRadiusLimit = 2;
+            camera2.upperRadiusLimit = 10;
+            camera2.wheelDeltaPercentage = 0.01;  
+            return camera2
+           }
+            
+      
+            
+    
+            // Lights
+            var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.6;
+            light.specular = BABYLON.Color3.Black();
+        
+            var light2 = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(0, -0.5, -1.0), scene);
+            light2.position = new BABYLON.Vector3(0, 5, 5);
+        
+     
+        
+
+            //Enviroment
+            let environmentSetup=()=>{
+            let env = {};
+            env.lighting = new BABYLON.CubeTexture.CreateFromPrefilteredData("textures/environment.env", scene);
+            env.lighting.name = "hamburg_hbf";
+            env.lighting.srgb = true;
+            env.lighting.gammaSpace = false;
+            env.lighting.rotationY = BABYLON.Tools.ToRadians(0);
+            scene.environmentTexture = env.lighting;
+
+            env.skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:600.0}, scene);
+            env.skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
+            env.skyboxMaterial.backFaceCulling = false; //True means no backgoeund at back
+            env.skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("textures/skybox/skybox2", scene);
+            env.skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+            env.skyboxMaterial.diffuseColor = BABYLON.Color3.Black()
+            env.skyboxMaterial.specularColor = BABYLON.Color3.Black();
+            env.skyboxMaterial.cameraExposure = 1;
+            env.skyboxMaterial.cameraContrast = 1.5;
+            env.skybox.material = env.skyboxMaterial;
+        };
+        
+
+             environmentSetup()
+        
+
+
+
+            // Ground
+            var ground = BABYLON.MeshBuilder.CreateGround("ground", { height: 50, width: 50, subdivisions: 4 }, scene);
+            var groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
+            groundMaterial.diffuseTexture = new BABYLON.Texture("textures/floor.jpg", scene);
+            groundMaterial.normalTexture = new BABYLON.Texture("textures/floorNormal.jpg", scene);
+            groundMaterial.diffuseTexture.uScale = 30;
+            groundMaterial.diffuseTexture.vScale = 30;
+            groundMaterial.specularColor = new BABYLON.Color3(.1, .1, .1);
+            ground.material = groundMaterial;
+        
+            // Keyboard events
+            var inputMap = {};
+            scene.actionManager = new BABYLON.ActionManager(scene);
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
+                inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            }));
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
+                inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            }));
+
+
+
+
+
+
+    // Adding the Assets from AssetStore
+    const hairStyle1 = await BABYLON.SceneLoader.ImportMeshAsync("", "AssetStore/", "hairStyle2.glb", scene);
+    const hairStyle2 = await BABYLON.SceneLoader.ImportMeshAsync("", "AssetStore/", "hairStyle3.glb", scene);
+    const mustacheStyle1 = await BABYLON.SceneLoader.ImportMeshAsync("", "AssetStore/", "mustacheStyle1.glb", scene);
+    const mustacheStyle2 = await BABYLON.SceneLoader.ImportMeshAsync("", "AssetStore/", "mustacheStyle2.glb", scene);
+    
+   
+    var mesh
+   
+    BABYLON.SceneLoader.ImportMesh("", "scenes/", "man.glb", scene, function (newMeshes, particleSystems, skeletons) {
+        	    // let material =materials
+          
+               mesh = newMeshes[0];
+                var skeleton = skeletons[0];
+		        mesh.scaling = new BABYLON.Vector3(1,1,1);
+	            mesh.position = new BABYLON.Vector3(0, 0, 0);
+		        skeleton.position = new BABYLON.Vector3(0, 0, 0);
+		        skeleton.scaling = new BABYLON.Vector3(1,1,1);
+              
+
+
+                
+                // Adding hairStyle1 1
+                hairStyle1.meshes[0].attachToBone(skeleton.bones[6], mesh);
+                hairStyle1.meshes[0].position.y=0.165;
+                hairStyle1.meshes[0].position.z=-0.04;
+                hairStyle1.meshes[0].rotation.x=Math.PI;
+		        hairStyle1.meshes[0].scaling = new BABYLON.Vector3(1, 1, 1);
+		        hairStyle1.meshes[0].setEnabled(false)
+                
+                // Adding hairStyle1 1
+                hairStyle2.meshes[0].attachToBone(skeleton.bones[6], mesh);
+                hairStyle2.meshes[0].position.y=0.11;
+                hairStyle2.meshes[0].position.z=0;
+                hairStyle2.meshes[0].rotation.x=Math.PI;
+		        hairStyle2.meshes[0].scaling = new BABYLON.Vector3(1, 1, 1);
+		        hairStyle2.meshes[0].setEnabled(false)
+		        
+                
+
+                //Adding Mustache Style1 
+                mustacheStyle1.meshes[0].attachToBone(skeleton.bones[6], mesh);
+                mustacheStyle1.meshes[0].position.y=0.03;
+                mustacheStyle1.meshes[0].position.z=0.11;
+                mustacheStyle1.meshes[0].rotation.x=Math.PI;
+		        mustacheStyle1.meshes[0].scaling = new BABYLON.Vector3(1, 1, 1);
+		        mustacheStyle1.meshes[0].setEnabled(false)
+
+                //Adding Mustache Style2 
+                mustacheStyle2.meshes[0].attachToBone(skeleton.bones[6], mesh);
+                mustacheStyle2.meshes[0].position.y=0.01;
+                mustacheStyle2.meshes[0].position.z=0.11;
+                mustacheStyle2.meshes[0].rotation.x=Math.PI;
+		        mustacheStyle2.meshes[0].scaling = new BABYLON.Vector3(1, 1, 1);
+		        mustacheStyle2.meshes[0].setEnabled(false)
+
+
+                cameraSetup().target=mesh
+                
+                 
+
+                var meshSpeed = 0.1;
+                var meshSpeedBackwards = 0.01;
+                var meshRotationSpeed = 0.08;
+        
+                var animating = true;
+        
+                const walkAnim = scene.getAnimationGroupByName("Walking");
+                const walkBackAnim = scene.getAnimationGroupByName("WalkingBack");
+                const idleAnim = scene.getAnimationGroupByName("Idle");
+              
+
+
+
+
+
+
+
+
+
+                  scene.onBeforeRenderObservable.add(() => {
+                    var keydown = false;
+        
+                    if (inputMap["w"]) {
+                        mesh.moveWithCollisions(mesh.forward.scaleInPlace(meshSpeed));
+                        keydown = true;
+                    }
+                    if (inputMap["s"]) {
+                        mesh.moveWithCollisions(mesh.forward.scaleInPlace(-meshSpeedBackwards));
+                        keydown = true;
+                    }
+                    if (inputMap["a"]) {
+                        mesh.rotate(BABYLON.Vector3.Up(), -meshRotationSpeed);
+                        keydown = true;
+                    }
+                    if (inputMap["d"]) {
+                        mesh.rotate(BABYLON.Vector3.Up(), meshRotationSpeed);
+                        keydown = true;
+                    }
+                 
+        
+           
+                    if (keydown) {
+                        if (!animating) {
+                            animating = true;
+                            if (inputMap["s"]) {
+                                //Walk backwards
+                                walkBackAnim.start(true, 1.0, walkBackAnim.from, walkBackAnim.to, false);
+                            }
+    
+                            else {
+                                //Walk
+                                walkAnim.start(true, 1.0, walkAnim.from, walkAnim.to, false);
+                            }
+                        }
+                    }
+                    else {
+        
+                        if (animating) {
+                            idleAnim.start(true, 1.0, idleAnim.from, idleAnim.to, false);
+                            walkAnim.stop();
+                            walkBackAnim.stop();
+                            animating = false;
+                        }
+                    }
+                });
+        		
+        	});
+
+
+    
+
+    //GUI 
+
+    var advancedTexture;
+    var advancedTexture1 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+
+
+
+    let guiSetup=(advancedTexture)=>{
+    
+    // Customize Asset Container
+    var rect1 = new BABYLON.GUI.Rectangle();
+    rect1.width = "250px";
+    rect1.height = "600px";
+    rect1.cornerRadius = 20;
+    rect1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    rect1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    rect1.top="80px"
+    rect1.left="200px"
+    rect1.thickness = 1;
+    rect1.background = "#525252";
+    advancedTexture.addControl(rect1);   
+    
+    // Customize Text 
+    var text1 = new BABYLON.GUI.TextBlock();
+    text1.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    text1.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    text1.text = "Customize Avatar";
+    text1.color = "white";
+    text1.fontSize = 24;
+    text1.top="100px"
+    text1.left="220px"
+    advancedTexture.addControl(text1);   
+
+    // Choose Hair Style
+    var text1 = new BABYLON.GUI.TextBlock();
+    text1.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    text1.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    text1.text = "Choose Hair Style";
+    text1.color = "white";
+    text1.fontSize = 18;
+    text1.top="200px"
+    text1.left="245px"
+    advancedTexture.addControl(text1);  
+    
+
+    // Button hairStyle1 1
+    var button3 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Hair Style 1");
+    button3.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button3.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    button3.top="250px"
+    button3.left="240px"
+    button3.width = "180px"
+    button3.height = "30px";
+    button3.color = "white";
+    button3.cornerRadius = 12;
+    button3.background = "black";
+    button3.onPointerUpObservable.add(function() {
+        var s=scene.getNodeById("Wolf3D_Hair")
+        s.setEnabled(false)
+        hairStyle2.meshes[0].setEnabled(false)
+        hairStyle1.meshes[0].setEnabled(true)
+       
+        
+            });
+    advancedTexture.addControl(button3);    
+
+    
+    // Button HairStyle 2
+    var button4 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Hair Style 2");
+    button4.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button4.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    button4.top="300px"
+    button4.left="240px"
+    button4.width = "180px"
+    button4.height = "30px";
+    button4.color = "white";
+    button4.cornerRadius = 12;
+    button4.background = "black";
+    button4.onPointerUpObservable.add(function() {
+        var s=scene.getNodeById("Wolf3D_Hair")
+        s.setEnabled(false)
+
+        hairStyle1.meshes[0].setEnabled(false)
+        hairStyle2.meshes[0].setEnabled(true)
+
+            });
+    advancedTexture.addControl(button4);    
+    
+    // Button HairStyle reset
+    var button5 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Restore Default");
+    button5.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button5.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    button5.top="350px"
+    button5.left="240px"
+    button5.width = "180px"
+    button5.height = "30px";
+    button5.color = "white";
+    button5.cornerRadius = 12;
+    button5.background = "black";
+    button5.onPointerUpObservable.add(function() {
+        hairStyle1.meshes[0].setEnabled(false)
+        hairStyle2.meshes[0].setEnabled(false)
+        var s=scene.getNodeById("Wolf3D_Hair")
+        s.setEnabled(true)
+
+            });
+    advancedTexture.addControl(button5);    
+
+
+
+    // Choose Mustaches Style
+    var text1 = new BABYLON.GUI.TextBlock();
+    text1.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    text1.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    text1.text = "Choose Mushtache Style";
+    text1.color = "white";
+    text1.fontSize = 18;
+    text1.top="400px"
+    text1.left="225px"
+    advancedTexture.addControl(text1);    
+
+    // Button Mustaches 1
+    var button3 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Mustaches Style 1");
+    button3.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button3.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    button3.top="450px"
+    button3.left="240px"
+    button3.width = "180px"
+    button3.height = "30px";
+    button3.color = "white";
+    button3.cornerRadius = 12;
+    button3.background = "black";
+    button3.onPointerUpObservable.add(function() {
+
+        mustacheStyle2.meshes[0].setEnabled(false)
+        mustacheStyle1.meshes[0].setEnabled(true)
+
+            });
+    advancedTexture.addControl(button3);    
+
+    
+    // Button HairStyle 2
+    var button4 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Mustaches Style 2");
+    button4.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button4.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    button4.top="500px"
+    button4.left="240px"
+    button4.width = "180px"
+    button4.height = "30px";
+    button4.color = "white";
+    button4.cornerRadius = 12;
+    button4.background = "black";
+    button4.onPointerUpObservable.add(function() {
+        mustacheStyle1.meshes[0].setEnabled(false)
+        mustacheStyle2.meshes[0].setEnabled(true)
+
+            });
+    advancedTexture.addControl(button4);    
+    
+    // Button HairStyle reset
+    var button5 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Restore Default");
+    button5.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button5.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    button5.top="550px"
+    button5.left="240px"
+    button5.width = "180px"
+    button5.height = "30px";
+    button5.color = "white";
+    button5.cornerRadius = 12;
+    button5.background = "black";
+    button5.onPointerUpObservable.add(function() {
+
+        mustacheStyle1.meshes[0].setEnabled(false)
+        mustacheStyle2.meshes[0].setEnabled(false)
+            });
+    advancedTexture.addControl(button5);    
+
+
+   // Customize the Outfit
+
+
+   var rect2 = new BABYLON.GUI.Rectangle();
+    rect2.width = "250px";
+    rect2.height = "600px";
+    rect2.cornerRadius = 20;
+    rect2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    rect2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    rect2.top="80px"
+    rect2.left="880px"
+    rect2.thickness = 1;
+    rect2.background = "#525252";
+    advancedTexture.addControl(rect2);   
+    
+    // Customize Text 
+    var text3 = new BABYLON.GUI.TextBlock();
+    text3.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    text3.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    text3.text = "Customize Outfit";
+    text3.color = "white";
+    text3.fontSize = 24;
+    text3.top="100px"
+    text3.left="910px"
+    advancedTexture.addControl(text3);   
+
+    
+
+     // Change outfit 
+     var text1 = new BABYLON.GUI.TextBlock();
+    text1.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    text1.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    text1.text = "Choose Outfit Color";
+    text1.color = "white";
+    text1.fontSize = 18;
+    text1.top="200px"
+    text1.left="920px"
+    advancedTexture.addControl(text1);  
+    
+
+    // choose to red
+    var button6 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Red Outfit");
+    button6.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button6.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    button6.top="250px"
+    button6.left="920px"
+    button6.width = "180px"
+    button6.height = "30px";
+    button6.color = "white";
+    button6.cornerRadius = 12;
+    button6.background = "red";
+    button6.onPointerUpObservable.add(function() {
+             var mat=scene.getMaterialById("Wolf3D_Outfit_Top")
+            mat.albedoTexture = new BABYLON.Texture("AssetStore/redOutfit.jpg",scene);
+
+            });
+    advancedTexture.addControl(button6);    
+
+    // Choose to green
+
+    var button8 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Green Outfit");
+    button8.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button8.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    button8.top="300px"
+    button8.left="920px"
+    button8.width = "180px"
+    button8.height = "30px";
+    button8.color = "white";
+    button8.cornerRadius = 12;
+    button8.background = "green";
+    button8.onPointerUpObservable.add(function() {
+        var mat=scene.getMaterialById("Wolf3D_Outfit_Top")
+            mat.albedoTexture = new BABYLON.Texture("AssetStore/greenOutfit.jpg",scene);
+            });
+    advancedTexture.addControl(button8);    
+
+    var button9 = BABYLON.GUI.Button.CreateSimpleButton("but1", "blue Outfit");
+    button9.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button9.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+    button9.top="350px"
+    button9.left="920px"
+    button9.width = "180px"
+    button9.height = "30px";
+    button9.color = "white";
+    button9.cornerRadius = 12;
+    button9.background = "blue";
+    button9.onPointerUpObservable.add(function() {
+        var mat=scene.getMaterialById("Wolf3D_Outfit_Top")
+            mat.albedoTexture = new BABYLON.Texture("AssetStore/blueOutfit.jpg",scene);
+            });
+    advancedTexture.addControl(button9);    
+
+    
+
+
+
+
+    }
+  
+    let switchButton=()=>{
+
+    var instructions = new BABYLON.GUI.TextBlock();
+    instructions.text = "Move with WASD keys";
+    instructions.color = "black";
+    instructions.fontSize = 25;
+
+    instructions.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP
+    instructions.left = "0px";
+    instructions.top = "850px";
+
+    advancedTexture1.addControl(instructions);
+
+ 
+    var button = BABYLON.GUI.Button.CreateSimpleButton("but1", "Customize");
+    button.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    button.width = "150px"
+    button.height = "40px";
+    button.left = "500px";
+    button.top = "300px";
+    button.color = "white";
+    button.cornerRadius = 20;
+    button.background = "Black";
+    button.onPointerUpObservable.add(function() {
+    
+        cameraConfig()
+        mesh.position = new BABYLON.Vector3(0, 0, 0);
+        advancedTexture = new BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        guiSetup(advancedTexture)
+            });
+    advancedTexture1.addControl(button);    
+
+    }
+
+    let doneCustomization=()=>{
+
+    //Chnage outfit into green
+ 
+    var button = BABYLON.GUI.Button.CreateSimpleButton("but1", "Done");
+    button.width = "150px"
+    button.height = "40px";
+    button.left = "100px";
+    button.top = "300px";
+    button.color = "white";
+    button.cornerRadius = 20;
+    button.background = "Black";
+    button.onPointerUpObservable.add(function() {
+        
+        advancedTexture.dispose()
+        cameraSetup()
+        cameraSetup().target=mesh
+     
+        
+            });
+    advancedTexture1.addControl(button);    
+
+    }
+
+
+    switchButton()
+    doneCustomization()
+
+
+
+
+
+
+    return scene;
+}
+
+var customizatonState=false
+                window.initFunction = async function() {
+                    
+                    
+                    var asyncEngineCreation = async function() {
+                        try {
+                        return createDefaultEngine();
+                        } catch(e) {
+                        console.log("the available createEngine function failed. Creating the default engine instead");
+                        return createDefaultEngine();
+                        }
+                    }
+
+                    window.engine = await asyncEngineCreation();
+        if (!engine) throw 'engine should not be null.';
+        window.scene = createScene();};
+        initFunction().then(() => {scene.then(returnedScene => { sceneToRender = returnedScene; });
+                
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
